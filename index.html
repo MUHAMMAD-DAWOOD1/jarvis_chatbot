@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jarvis Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "react/": "https://aistudiocdn.com/react@^19.2.0/",
+          "react": "https://aistudiocdn.com/react@^19.2.0",
+          "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+          "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.0",
+          "react-markdown": "https://aistudiocdn.com/react-markdown@^9.0.1",
+          "remark-gfm": "https://aistudiocdn.com/remark-gfm@^4.0.0",
+          "rehype-raw": "https://aistudiocdn.com/rehype-raw@^7.0.0"
+        }
+      }
+    </script>
+    <style>
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate-fadeIn {
+        animation: fadeIn 0.8s ease-out forwards;
+      }
+      .animate-fadeIn-delay-1 { animation-delay: 0.2s; opacity: 0; }
+      .animate-fadeIn-delay-2 { animation-delay: 0.4s; opacity: 0; }
+      .animate-fadeIn-delay-3 { animation-delay: 0.6s; opacity: 0; }
+      .animate-fadeIn-delay-4 { animation-delay: 0.8s; opacity: 0; }
+      
+      body.dark {
+        background-color: #0B121C;
+        color: #e2e8f0;
+      }
+
+      .app-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: -1;
+        opacity: 1;
+        transition: opacity 1s ease-in-out;
+      }
+      
+      .bg-live-gradient::before {
+        background: linear-gradient(
+            -45deg, 
+            #4f46e5,
+            #7c3aed,
+            #db2777,
+            #14b8a6
+        );
+        background-size: 400% 400%;
+        animation: gradient-animation 15s ease infinite;
+        filter: blur(120px);
+        opacity: 0.4;
+      }
+
+      @keyframes gradient-animation {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      /* Mode Backgrounds */
+      .bg-mode-coding::before {
+        background-color: #0d1117;
+        background-image:
+          linear-gradient(0deg, transparent 24%, rgba(4, 255, 0, 0.2) 25%, rgba(4, 255, 0, 0.2) 26%, transparent 27%, transparent 74%, rgba(4, 255, 0, 0.2) 75%, rgba(4, 255, 0, 0.2) 76%, transparent 77%, transparent),
+          linear-gradient(90deg, transparent 24%, rgba(4, 255, 0, 0.2) 25%, rgba(4, 255, 0, 0.2) 26%, transparent 27%, transparent 74%, rgba(4, 255, 0, 0.2) 75%, rgba(4, 255, 0, 0.2) 76%, transparent 77%, transparent);
+        background-size: 50px 50px;
+        animation: scanlines 4s linear infinite;
+        opacity: 0.2;
+      }
+      
+      @keyframes scanlines {
+        from { background-position: 0 0; }
+        to { background-position: 0 100px; }
+      }
+
+      .bg-mode-writing::before {
+        background: linear-gradient(135deg, rgba(245, 222, 179, 0.1) 25%, transparent 25%) -50px 0, linear-gradient(225deg, rgba(245, 222, 179, 0.1) 25%, transparent 25%) -50px 0, linear-gradient(315deg, rgba(245, 222, 179, 0.1) 25%, transparent 25%), linear-gradient(45deg, rgba(245, 222, 179, 0.1) 25%, transparent 25%);
+        background-size: 100px 100px;
+        background-color: #1a1611;
+        opacity: 0.3;
+      }
+      
+      .bg-mode-web::before {
+        background-color: #0f172a; /* A dark blue slate */
+        background-image:
+          radial-gradient(circle at center, rgba(56, 189, 248, 0.1) 0%, transparent 40%),
+          linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: 800px 800px, 50px 50px, 50px 50px;
+        background-position: center center, 0 0, 0 0;
+        animation: web-pulse 20s linear infinite;
+        opacity: 0.5;
+      }
+
+      @keyframes web-pulse {
+        0% { background-position: center center, 0 0, 0 0; }
+        50% { background-position: center center, 25px 25px, 25px 25px; }
+        100% { background-position: center center, 0 0, 0 0; }
+      }
+
+      .bg-mode-image::before {
+        background:
+          linear-gradient(217deg, rgba(255,0,0,.8), rgba(255,0,0,0) 70.71%),
+          linear-gradient(127deg, rgba(0,255,0,.8), rgba(0,255,0,0) 70.71%),
+          linear-gradient(336deg, rgba(0,0,255,.8), rgba(0,0,255,0) 70.71%);
+        animation: colors-morph 15s ease-in-out infinite;
+        opacity: 0.15;
+      }
+      
+      @keyframes colors-morph {
+        0% { background-position: 0% 50%, 50% 50%, 100% 50%; }
+        50% { background-position: 100% 50%, 0% 50%, 50% 50%; }
+        100% { background-position: 0% 50%, 50% 50%, 100% 50%; }
+      }
+
+      .bg-mode-design::before {
+        background-color: #1a202c;
+        background-image:
+          linear-gradient(rgba(113, 128, 150, 0.2) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(113, 128, 150, 0.2) 1px, transparent 1px);
+        background-size: 50px 50px;
+        animation: blueprint-pan 10s linear infinite;
+        opacity: 0.3;
+      }
+
+      @keyframes blueprint-pan {
+        from { background-position: 0 0; }
+        to { background-position: 100px 50px; }
+      }
+
+      .bg-mode-complex::before {
+        background-color: #0A0A1F; /* Very dark blue/purple */
+        background-image: 
+          radial-gradient(circle at 15% 50%, #4c1d95 0, transparent 20%),
+          radial-gradient(circle at 85% 30%, #4338ca 0, transparent 20%),
+          radial-gradient(circle at 50% 80%, #1e40af 0, transparent 20%);
+        background-size: 200% 200%;
+        animation: complex-thought 25s linear infinite;
+        opacity: 0.4;
+      }
+
+      @keyframes complex-thought {
+        0% { background-position: 0% 0%; }
+        25% { background-position: 50% 50%; }
+        50% { background-position: 100% 0%; }
+        75% { background-position: 50% -50%; }
+        100% { background-position: 0% 0%; }
+      }
+
+      .bg-mode-music::before {
+        background: linear-gradient(90deg, #9333ea, #3b82f6, #ec4899, #9333ea);
+        background-size: 400% 400%;
+        animation: wave-gradient 10s ease infinite;
+        opacity: 0.15;
+      }
+      
+      @keyframes wave-gradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      @keyframes mic-pulse {
+        0% {
+          box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+        }
+        70% {
+          box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+        }
+      }
+      .animate-mic-pulse {
+        animation: mic-pulse 2s infinite;
+      }
+
+      @keyframes voice-pulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(0, 255, 255, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 255, 0); }
+      }
+      .animate-voice-pulse { animation: voice-pulse 2s infinite; }
+      
+      /* Markdown styles */
+      .markdown-content ul, .markdown-content ol {
+        list-style-position: inside;
+        padding-left: 1rem;
+        margin-top: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .markdown-content li {
+        margin-bottom: 0.25rem;
+      }
+      .markdown-content a {
+        color: #67e8f9; /* cyan-300 */
+        text-decoration: underline;
+      }
+      .markdown-content strong {
+        font-weight: 600;
+      }
+      .markdown-content mark {
+        background-color: #fef08a; /* yellow-200 */
+        color: #1e293b; /* slate-800 */
+        padding: 0.1rem 0.2rem;
+        border-radius: 0.2rem;
+      }
+      .markdown-content code {
+        font-family: 'Courier New', Courier, monospace;
+        background-color: #334155;
+        padding: 0.1rem 0.3rem;
+        border-radius: 0.25rem;
+      }
+      /* Ensure inline code inside our custom code block doesn't get double-styled */
+      .code-block-container .markdown-content code {
+        background-color: transparent;
+        padding: 0;
+      }
+
+      /* Code Block Component */
+      .code-block-container pre {
+          background-color: transparent !important;
+      }
+      .code-block-container code {
+        font-family: 'Courier New', Courier, monospace;
+        background-color: transparent !important;
+        padding: 0 !important;
+      }
+      
+      /* Scrollbar Hide */
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
+      }
+
+      /* Light Theme */
+      body.light {
+        background-color: #f1f5f9; /* slate-100 */
+        color: #0f172a; /* slate-900 */
+      }
+      .light .app-container::before {
+        opacity: 0.05;
+      }
+      .light .bg-live-gradient::before {
+        background: linear-gradient(
+            -45deg,
+            #38bdf8,
+            #818cf8,
+            #f472b6,
+            #34d399
+        );
+        opacity: 0.6;
+      }
+      .light .text-slate-100 { color: #0f172a; }
+      .light .text-slate-500 { color: #475569; }
+      /* Buttons */
+      .light .bg-slate-800\/50 { background-color: rgba(226, 232, 240, 0.5); }
+      .light .border-slate-700 { border-color: #cbd5e1; }
+      .light .text-slate-300 { color: #334155; }
+      .light .hover\:bg-slate-700\/80:hover { background-color: rgba(203, 213, 225, 0.8); }
+      /* Header */
+      .light .bg-slate-900\/70 { background-color: rgba(255, 255, 255, 0.7); }
+      .light .border-slate-800 { border-color: #e2e8f0; }
+      .light .text-slate-200 { color: #1e293b; }
+      /* SearchBar */
+      .light .bg-slate-800\/80 { background-color: rgba(226, 232, 240, 0.8); }
+      .light .text-slate-400 { color: #64748b; }
+      .light .placeholder-slate-400::placeholder { color: #94a3b8; }
+      /* Chat Messages */
+      .light .bg-slate-800 { background-color: #e2e8f0; } /* Bot bubble */
+      .light .bg-slate-700 { background-color: #0ea5e9; } /* User bubble (sky-500) */
+      .light .text-white { color: #fff; }
+      .light .markdown-content a { color: #0369a1; } /* cyan-700 */
+      /* Markdown Content - Light Theme */
+      .light .markdown-content code {
+        background-color: #cbd5e1; /* slate-300 */
+        color: #334155; /* slate-700 */
+      }
+      .light .markdown-content strong {
+        color: #0f172a; /* slate-900 */
+      }
+      .light .markdown-content mark {
+        background-color: #fde047; /* yellow-400 */
+        color: #1e293b; /* slate-800 */
+      }
+      /* Code Block Component - Light Theme */
+      .light .code-block-container {
+        background-color: #f8fafc; /* slate-50 */
+        border-color: #e2e8f0; /* slate-200 */
+      }
+      .light .code-block-header {
+        background-color: #f1f5f9; /* slate-100 */
+      }
+      .light .code-block-header span {
+        color: #64748b; /* slate-500 */
+      }
+      .light .code-block-header button {
+        color: #475569; /* slate-600 */
+      }
+      .light .code-block-header button:hover {
+        color: #0f172a; /* slate-900 */
+      }
+      .light .code-block-container pre {
+        color: #334155;
+      }
+      /* Chat Input */
+      .light .bg-slate-800\/70 { background-color: rgba(255, 255, 255, 0.7); }
+      .light .backdrop-blur-sm { backdrop-filter: blur(4px); }
+      .light .focus-within\:ring-cyan-500:focus-within { --tw-ring-color: #06b6d4; }
+      /* NavBar */
+      .light .nav-bar {
+        background-color: rgba(248, 250, 252, 0.8); /* slate-50 */
+        border-color: #e2e8f0; /* slate-200 */
+      }
+      .light .nav-button {
+        color: #475569; /* slate-600 */
+      }
+      .light .nav-button:hover {
+        color: #0f172a; /* slate-900 */
+        background-color: #e2e8f0; /* slate-200 */
+      }
+      .light .nav-tooltip {
+        background-color: #f8fafc; /* slate-50 */
+        color: #0f172a; /* slate-900 */
+        border: 1px solid #e2e8f0; /* slate-200 */
+      }
+      @media (hover: none) or (max-width: 768px) {
+        .nav-tooltip {
+          display: none;
+        }
+      }
+
+      /* Splash Screen Styles */
+      .splash-screen {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(160deg, #e0f2fe, #f5f3ff);
+        z-index: 100;
+        animation: splash-fade-out 0.5s ease-in forwards 1.5s;
+      }
+
+      .splash-content {
+        text-align: center;
+        color: #0f172a;
+      }
+
+      .splash-title {
+        font-size: 6rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        color: #0f172a;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        display: inline-block;
+      }
+
+      .splash-title span {
+        display: inline-block;
+        opacity: 0;
+        animation: letter-reveal 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      }
+
+      .splash-subtitle {
+        margin-top: 0.5rem;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #334155;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+      
+      .splash-subtitle span {
+        display: inline-block;
+        opacity: 0;
+        margin: 0 0.25em; /* Add space between words */
+        animation: word-reveal 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      }
+
+      @keyframes letter-reveal {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      
+      @keyframes word-reveal {
+         from {
+          opacity: 0;
+          transform: translateY(15px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes splash-fade-out {
+        from {
+          opacity: 1;
+        }
+        to {
+          opacity: 0;
+          visibility: hidden;
+        }
+      }
+    </style>
+  <link rel="stylesheet" href="/index.css">
+</head>
+  <body class="light">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>

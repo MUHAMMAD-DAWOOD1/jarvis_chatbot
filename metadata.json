@@ -1,0 +1,8 @@
+{
+  "name": "JARVIS final",
+  "description": "A conversational AI assistant named Jarvis, built with React and the Gemini API. Engage in witty, helpful, and slightly sarcastic conversations.",
+  "requestFramePermissions": [
+    "geolocation",
+    "microphone"
+  ]
+}
